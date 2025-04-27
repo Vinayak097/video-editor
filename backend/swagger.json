@@ -1,0 +1,545 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Video Editing Platform API",
+    "description": "API for a web-based video editing platform that allows users to upload videos, apply editing operations, and download the rendered video.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/videos": {
+      "get": {
+        "summary": "Get all videos",
+        "description": "Returns a list of all uploaded videos",
+        "responses": {
+          "200": {
+            "description": "A list of videos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VideoSummary"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/videos/{id}": {
+      "get": {
+        "summary": "Get a video by ID",
+        "description": "Returns a single video by ID with its edits and subtitles",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The video ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A video object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Video not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/videos/upload": {
+      "post": {
+        "summary": "Upload a new video",
+        "description": "Upload a video file and store its metadata",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "video": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The video file to upload"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title for the video (optional)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description for the video (optional)"
+                  }
+                },
+                "required": ["video"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Video uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Video uploaded successfully"
+                    },
+                    "video": {
+                      "$ref": "#/components/schemas/VideoSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No video file uploaded"
+          },
+          "500": {
+            "description": "Failed to upload video"
+          }
+        }
+      }
+    },
+    "/api/videos/{id}/trim": {
+      "post": {
+        "summary": "Trim a video",
+        "description": "Trim a video to specified start and end times",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The video ID"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startTime": {
+                    "type": "number",
+                    "description": "Start time in seconds",
+                    "example": 10.5
+                  },
+                  "endTime": {
+                    "type": "number",
+                    "description": "End time in seconds",
+                    "example": 30.2
+                  }
+                },
+                "required": ["startTime", "endTime"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Video trimmed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Video trimmed successfully"
+                    },
+                    "edit": {
+                      "$ref": "#/components/schemas/Edit"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Video not found"
+          },
+          "500": {
+            "description": "Failed to trim video"
+          }
+        }
+      }
+    },
+    "/api/videos/{id}/subtitles": {
+      "post": {
+        "summary": "Add subtitles to a video",
+        "description": "Add subtitle text to a video at specified times",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The video ID"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Subtitle text",
+                    "example": "Hello, world!"
+                  },
+                  "startTime": {
+                    "type": "number",
+                    "description": "Start time in seconds",
+                    "example": 5.0
+                  },
+                  "endTime": {
+                    "type": "number",
+                    "description": "End time in seconds",
+                    "example": 10.0
+                  }
+                },
+                "required": ["text", "startTime", "endTime"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subtitles added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Subtitles added successfully"
+                    },
+                    "subtitle": {
+                      "$ref": "#/components/schemas/Subtitle"
+                    },
+                    "edit": {
+                      "$ref": "#/components/schemas/Edit"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Video not found"
+          },
+          "500": {
+            "description": "Failed to add subtitles"
+          }
+        }
+      }
+    },
+    "/api/videos/{id}/render": {
+      "post": {
+        "summary": "Render final video",
+        "description": "Combine all edits into a final video",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The video ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video rendered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Video rendered successfully"
+                    },
+                    "video": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "example": "ready"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No completed edits found"
+          },
+          "404": {
+            "description": "Video not found"
+          },
+          "500": {
+            "description": "Failed to render video"
+          }
+        }
+      }
+    },
+    "/api/videos/{id}/download": {
+      "get": {
+        "summary": "Download a video",
+        "description": "Download the final rendered video",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The video ID"
+          },
+          {
+            "name": "original",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Set to true to download the original video instead of the rendered one"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video file stream",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Video is not ready for download"
+          },
+          "404": {
+            "description": "Video not found"
+          },
+          "500": {
+            "description": "Failed to download video"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VideoSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "example": "My Video"
+          },
+          "description": {
+            "type": "string",
+            "example": "A description of my video"
+          },
+          "duration": {
+            "type": "number",
+            "example": 120.5
+          },
+          "status": {
+            "type": "string",
+            "enum": ["uploaded", "processing", "ready"],
+            "example": "uploaded"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "VideoDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "example": "My Video"
+          },
+          "description": {
+            "type": "string",
+            "example": "A description of my video"
+          },
+          "filename": {
+            "type": "string",
+            "example": "original_video.mp4"
+          },
+          "filepath": {
+            "type": "string",
+            "example": "uploads/original/1234567890_original_video.mp4"
+          },
+          "filesize": {
+            "type": "integer",
+            "example": 15000000
+          },
+          "duration": {
+            "type": "number",
+            "example": 120.5
+          },
+          "status": {
+            "type": "string",
+            "enum": ["uploaded", "processing", "ready"],
+            "example": "uploaded"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "edits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Edit"
+            }
+          },
+          "subtitles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subtitle"
+            }
+          }
+        }
+      },
+      "Edit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["trim", "subtitle"],
+            "example": "trim"
+          },
+          "parameters": {
+            "type": "object",
+            "example": {
+              "startTime": 10.5,
+              "endTime": 30.2
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"],
+            "example": "completed"
+          },
+          "outputPath": {
+            "type": "string",
+            "example": "uploads/processed/trim_1234567890_video.mp4"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Subtitle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "text": {
+            "type": "string",
+            "example": "Hello, world!"
+          },
+          "startTime": {
+            "type": "number",
+            "example": 5.0
+          },
+          "endTime": {
+            "type": "number",
+            "example": 10.0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
